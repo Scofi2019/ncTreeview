@@ -1,0 +1,76 @@
+.ncTreeview{
+    position:relative;
+    border:1px solid #ddd;
+	border-radius:5px;
+	box-sizing:border-box;
+	user-select:none;
+}
+
+.ncTreeviewHead{
+    padding:4px 8px;
+    border-bottom:1px solid #ddd;
+    box-sizing:border-box;
+}
+
+.ncTreeviewSearch{
+    padding:4px 8px;
+    border-bottom:1px solid #ddd;
+    box-sizing:border-box;
+}
+
+.ncTreeviewSearchGroup{
+    position:relative;
+}
+
+.ncTreeviewSearchInput{
+    padding:3px 10px 3px 25px;
+	border:1px solid #ccc;
+    border-radius:3px;
+	width:100%;
+	box-sizing:border-box;
+}
+
+.ncTreeviewSearchGroup>i{
+    position:absolute;
+	left:8px;
+	top:6px;
+	font-size:11px;
+}
+
+.ncTreeviewBody{
+    padding:4px 8px;
+	box-sizing:border-box;
+	overflow:auto;
+}
+
+.ncTreeviewNode{
+    
+}
+
+.ncTreeviewNodeArrow{
+    padding:4px 2px 4px 2px;
+	display:inline-block;
+	width:12px;
+}
+
+.ncTreeviewNodeArrow>a{
+    padding:2px 4px;
+}
+
+.ncTreeviewNodeContent{
+    padding:4px 8px 4px 2px;
+	display:inline-block;
+	width:auto;
+}
+
+.ncTreeviewNodeContent:hover{
+    background-color:#ddd;
+}
+
+.ncTreeviewNodeContent.focus{
+    background-color:#ccc;
+}
+
+.ncTreeviewNodeChild{
+    margin-left:16px;
+}
