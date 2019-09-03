@@ -13,8 +13,36 @@
 
 <body style="margin:8px;">
 
+<div style="margin-bottom:5px;">
+	<button id="btnAdd" type="button"><i class="fa fa-plus"></i>&nbsp;增加节点</button>&nbsp;
+	<button id="btnRemove" type="button"><i class="fa fa-minus"></i>&nbsp;删除节点</button>&nbsp;
+	<button id="btnExpand" type="button"><i class="fa fa-minus-square-o"></i>&nbsp;展开</button>&nbsp;
+	<button id="btnCollapse" type="button"><i class="fa fa-plus-square-o"></i>&nbsp;收起</button>
+	<label><input id="selectAll" type="checkbox"/>全选</label>&nbsp;
+	<label><input id="showIcon" type="checkbox" checked/>显示图标</label>&nbsp;
+	<label><input id="showCheck" type="checkbox" checked/>多选</label>&nbsp;
+	<label>设置高度</label>
+	<select id="setHeight">
+	    <option value="0">-- 选择高度 --</option>
+	    <option value="50">50</option>
+		<option value="100">100</option>
+		<option value="150">150</option>
+		<option value="200">200</option>
+		<option value="250">250</option>
+		<option value="300">300</option>
+		<option value="350">350</option>
+		<option value="400">400</option>
+		<option value="450">450</option>
+		<option value="500">500</option>
+	</select>
+	<button id="btnSetAttribute" type="button">设置属性</button>=>
+	<input id="textAttribute" type="text" value='{"times":"2012-01-02","people":"John"}' />
+	<button id="btnGetAttribute" type="button">获取属性</button>&nbsp;
+	<button id="btnGetSelectedNode" type="button">获取选择的节点</button>&nbsp;
+</div>
 <div class="ncTreeview">
-    <div class="ncTreeviewHead">ncTreeviewDemo</div>
+    <div class="ncTreeviewHead">ncTreeviewDemo
+    </div>
     <div class="ncTreeviewSearch"></div>
 	<div class="ncTreeviewBody">
 	    <div class="ncTreeviewNode">
