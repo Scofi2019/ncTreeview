@@ -4,10 +4,22 @@ var treeViewDemo = {
 		    var treeview = $(".ncTreeview").ncTreeview({showIcon:$("#showIcon").prop("checked"), showCheck:$("#showCheck").prop("checked")});
 			treeview.load([
 				{id:"1",name:"node-one",childs:[{id:"11",name:"node-one-one"},
-				{id:"12",name:"node-one-two", childs:[{id:"121",name:"node-one-two-one"},{id:"122",name:"node-one-two-two"}]}]},
+				{id:"12",name:"node-one-two--------------------------------------------------------------------", childs:[{id:"121",name:"node-one-two-one"},{id:"122",name:"node-one-two-two"}]}]},
 				{id:"2",name:"node-two"},
-				{id:"3",name:"node-three",childs:[{id:"31",name:"node-three-one"},{id:"32",name:"node-three-two"}]},
+				{id:"3",name:"node-three",childs:[{id:"31",name:"node-three-one----------------------------------------------------------------------------------------------------------------------------------------"},{id:"32",name:"node-three-two"}]},
 				{id:"4",name:"node-four"}]);
+			 
+
+		    /**** treeview.loadByPid([
+			    {id:"1",name:"node-one",pid:""},	
+				{id:"2",name:"node-two",pid:""},	
+				{id:"3",name:"node-three",pid:""},	
+				{id:"11",name:"node-one-one",pid:"1"},	
+				{id:"12",name:"node-one-two",pid:"1"},	
+				{id:"21",name:"node-two-one",pid:"2"},	
+				{id:"22",name:"node-two-two",pid:"2"},	
+				{id:"111",name:"node-one-one-one",pid:"11"}
+			]);******/
 
 			$("#btnAdd").click(function(){
 				var tv = $(".ncTreeview").getNcTreeview();

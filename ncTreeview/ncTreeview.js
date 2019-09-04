@@ -30,17 +30,49 @@ function __ncTreeview(option){
 	this.option = option?option:{};
 	
 	myself = this;
+	
+	/**
+	 * 加载数据
+	 * 数据格式样例 [{id:"", name:"", pid:""},{id:"", name:"", pid:""}]
+	 */
+	this.loadByPid = function(nodeArr){
+		for(var i = 0; i < nodeArr.length; i++){
+			var nodeI = nodeArr[i];
+			nodeI.childs = [];
+			for(var j = 0; j < nodeArr.length; j++){
+				var nodeJ = nodeArr[j];
+				if(nodeJ.pid == nodeI.id){
+					nodeJ.unRoot = true;
+					nodeI.childs.push(nodeJ);
+				}
+			}
+		}
+		
+		var nodes = [];
+		
+		for(var i = 0; i < nodeArr.length; i++){
+			var node = nodeArr[i];
+			if(node.unRoot) continue;
+			nodes.push(node);
+		}
+		
+		this.load(nodes);
+	}
      
-	//加载数据
+	/**
+	 * 加载数据
+	 * 数据格式样例 [{id:"", name:"", childs:[{id:"", name:""},{id:"", name:""}]},
+	 *           {id:"", name:"", childs:[{id:"", name:""},{id:"", name:""}]}]
+	 */
 	this.load = function(nodeArr){
         var $body = this.$view.find(".ncTreeviewBody");
-		$body.html("");
+		$body.html("<div class='ncTreeviewBodyWrapper'></div>");
 
 		if(!nodeArr || nodeArr.length == 0) return;
 
         for(var i=0;i<nodeArr.length;i++){
 		    var node = nodeArr[i];
-            this._insertNode(node, $body, null);
+            this._insertNode(node, $body.children(".ncTreeviewBodyWrapper"), null);
 		}
 
 		this.create();
@@ -55,6 +87,10 @@ function __ncTreeview(option){
 		if(pid){
 		    $node.attr("node-pid", pid);
 		}
+		
+		if(node.attributes){
+			this.setNodeAttribute(node.id, node.attributes);
+		}
 
 		if(node.childs && node.childs.length > 0){
 			var $childNodes = $('<div class="ncTreeviewNodeChild"></div>');
@@ -64,10 +100,53 @@ function __ncTreeview(option){
 			    this._insertNode(node.childs[i], $childNodes, node.id);
 			}
 		}
-
+		
 		return $node;
 	}
-
+	
+	this._maxWidth = 0;
+	this._maxWidthMap = {};
+	
+	this._setMaxWidth = function($node, refreshUI){
+		var maxWidth = 0;
+		
+		if($node && $node.length > 0){
+			var $arrow = $node.children(".ncTreeviewNodeArrow");
+			var $check = $node.children(".ncTreeviewNodeCheck");
+			var $icon = $node.children(".ncTreeviewNodeIcon");
+			var $content = $node.children(".ncTreeviewNodeContent");
+			
+			var left = this.$view.children(".ncTreeviewBody").offset().left;
+			var nodeLeft = $node.offset().left;
+			
+			maxWidth = (nodeLeft - left) + $node.outerWidth() - $node.width() +
+			           $arrow.outerWidth(true) + $check.outerWidth(true) + $icon.outerWidth(true) + $content.outerWidth(true);
+			
+			this._maxWidthMap[$node.attr("node-id")] = maxWidth;
+			
+			if(this._maxWidth < maxWidth){
+				this._maxWidth = maxWidth;
+				if(refreshUI){
+					this.$view.children(".ncTreeviewBody").children(".ncTreeviewBodyWrapper").width(this._maxWidth);
+				}
+			}
+		}else{
+			var maxW = 0;
+			for(var i in this._maxWidthMap){
+				var $nd = this.$view.find(".ncTreeviewNode[node-id='"+i+"']");
+				if($nd.parent().css("display") == "none"){
+					this._maxWidthMap[i] = 0;
+				}else if(maxW < this._maxWidthMap[i]){
+					maxW = this._maxWidthMap[i];
+				}
+			}
+			this._maxWidth = maxW;
+			if(refreshUI){
+				this.$view.children(".ncTreeviewBody").children(".ncTreeviewBodyWrapper").width(maxW);
+			}
+		}
+	}
+	
     //创建结构
 	this.create = function(){
 		//搜索框
@@ -105,7 +184,7 @@ function __ncTreeview(option){
 
 		//设置选择框
 		this._setCheck = function($node, check){
-			if(!myself.option.showCheck) return;
+			if(!this.option.showCheck) return;
 			if($node.children(".ncTreeviewNodeCheck").length == 0){
 			     $node.find(".ncTreeviewNodeArrow").after("<div class='ncTreeviewNodeCheck'><label></label></div>");
 			}
@@ -113,6 +192,8 @@ function __ncTreeview(option){
 			$node.children(".ncTreeviewNodeCheck").attr("node-checked",check?"true":"false");
 			var $ele = $node.parent().parent();
 			while($ele.length > 0){
+				var cssClass = $ele.attr("class");
+				if(!cssClass || cssClass.indexOf("ncTreeviewNode") < 0) break;
 				var $eleChilds = $ele.children(".ncTreeviewNodeChild").children(".ncTreeviewNode");
 				var count = $eleChilds.length;
 				var hasMiddle = false;
@@ -152,7 +233,7 @@ function __ncTreeview(option){
 
 		//设置图标
 		this._setIcon = function($node, expand){
-			if(!myself.option.showIcon) return;
+			if(!this.option.showIcon) return;
 			var length = $node.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length;
 			var icon = expand?(length > 0?"folder-open-o":"leaf"):(length > 0?"folder-o":"leaf");
 			if($node.children(".ncTreeviewNodeIcon").length == 0){
@@ -166,9 +247,12 @@ function __ncTreeview(option){
 
         //有子节点的节点插入箭头图标
 		this.$view.find(".ncTreeviewNode").each(function(){
-			myself._setArrow($(this));
-			myself._setIcon($(this));
-			myself._setCheck($(this));
+			var $this = $(this);
+			
+			myself._setArrow($this);
+			myself._setIcon($this);
+			myself._setCheck($this);
+			myself._setMaxWidth($this);
 		});
 
         //绑定选择框点击事件
@@ -196,11 +280,18 @@ function __ncTreeview(option){
 				$childs.hide();
 				$i.addClass("fa fa-caret-right");
 				$node.removeAttr("expand");
+				
+				this._setMaxWidth(null, true);
 			}else{
 				$childs = $node.children(".ncTreeviewNodeChild");
 				$childs.show();
 				$i.addClass("fa fa-caret-down");
 				$node.attr("expand","true");
+				
+				//重新设置bodyWrapper宽度
+				$childs.find(".ncTreeviewNode").each(function(){
+					this._setMaxWidth($(this), true);
+				});
 
 				result = true;
 			}
@@ -220,13 +311,13 @@ function __ncTreeview(option){
 
         //绑定箭头点击事件
 		this._bindArrowClick = function($node){
-		    var isExpand = myself._expandOrCollpaseNode($node);
+		    var isExpand = this._expandOrCollpaseNode($node);
 			
-			if(myself.option){
-				if(myself.option.expand && isExpand){
-					myself.option.expand.call(myself);
-				}else if(myself.option.collapse && !isExpand){
-				    myself.option.collapse.call(myself);
+			if(this.option){
+				if(this.option.expand && isExpand){
+					this.option.expand.call(this);
+				}else if(this.option.collapse && !isExpand){
+				    this.option.collapse.call(this);
 				}
 			}
 		}
@@ -240,21 +331,21 @@ function __ncTreeview(option){
         this._bindNodeClick = function($node, doubleTrigger){
 			var $this = $node.children(".ncTreeviewNodeContent");
 
-		    if(myself.$lastNode){
-			    myself.$lastNode.removeClass("focus");
+		    if(this.$lastNode){
+			    this.$lastNode.removeClass("focus");
 			}
 
 			$this.addClass("focus");
 
-			myself.$lastNode = $this;
+			this.$lastNode = $this;
 
             if(doubleTrigger){
-			    if(myself.option.nodeDoubleClick){
-			        myself.option.nodeDoubleClick.call(myself);
+			    if(this.option.nodeDoubleClick){
+			        this.option.nodeDoubleClick.call(this, this.getCurrentNode());
 			    }
 			}else{
-			    if(myself.option.nodeClick){
-			        myself.option.nodeClick.call(myself);
+			    if(this.option.nodeClick){
+			        this.option.nodeClick.call(this, this.getCurrentNode());
 			    }
 			}
 		}
@@ -268,6 +359,9 @@ function __ncTreeview(option){
 		this.$view.find(".ncTreeviewNodeContent").dblclick(function(){
 			myself._bindNodeClick($(this).parent(), true);
 		});
+		
+		//设置bodyWrapper宽度
+		this.$view.children(".ncTreeviewBody").children(".ncTreeviewBodyWrapper").width(this._maxWidth);
 	}
 
 
@@ -278,7 +372,7 @@ function __ncTreeview(option){
 		if(pid){
 			$pNode = this.$view.find(".ncTreeviewNode[node-id='"+pid+"']");
 		}else{
-		    $pNode = this.$view.find(".ncTreeviewBody");
+		    $pNode = this.$view.find(".ncTreeviewBody>.ncTreeviewBodyWrapper");
 		}
 
 		if(pid && $pNode.children(".ncTreeviewNodeChild").length == 0){
@@ -303,6 +397,7 @@ function __ncTreeview(option){
         this._setArrow($node);
 		this._setIcon($node);
 		this._setCheck($node);
+		this._setMaxWidth($node);
 
         $node.children(".ncTreeviewNodeArrow").children("a").click(function(){
 			myself._bindArrowClick($(this).parent().parent());
@@ -352,10 +447,12 @@ function __ncTreeview(option){
 		var $nodeContent = this.$view.find(".ncTreeviewNodeContent.focus");
 		if($nodeContent.length > 0){
 		    var $node = $nodeContent.parent();
-			myself._currentNode = {id:$node.attr("node-id"), 
+			this._currentNode = {id:$node.attr("node-id"), 
 				                 name:$node.attr("node-name"), 
 				                  pid:$node.attr("node-pid")};
-			return myself._currentNode;
+			
+			this._currentNode = $.extend(this._currentNode, this.getNodeAttribute(this._currentNode.id));
+			return this._currentNode;
 		}
 		return null;
 	}
@@ -408,11 +505,11 @@ function __ncTreeview(option){
 	//设置节点属性
 	this.setNodeAttribute = function(id, attrs){
 	    var $node = this.$view.find(".ncTreeviewNode[node-id='"+id+"']");
-		if(attrs){
+		if(typeof(attrs) == "string"){
 			attrs = JSON.parse(attrs);
-		    for(var i in attrs){
-			    $node.attr("node-"+i, attrs[i]);
-			}
+		}
+		for(var i in attrs){
+		    $node.attr("node-"+i, attrs[i]);
 		}
 	}
  
