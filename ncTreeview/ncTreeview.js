@@ -290,7 +290,7 @@ function __ncTreeview(option){
 				
 				//重新设置bodyWrapper宽度
 				$childs.find(".ncTreeviewNode").each(function(){
-					this._setMaxWidth($(this), true);
+					myself._setMaxWidth($(this), true);
 				});
 
 				result = true;
