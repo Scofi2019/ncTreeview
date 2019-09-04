@@ -11,14 +11,19 @@ var treeViewDemo = {
 
 			$("#btnAdd").click(function(){
 				var tv = $(".ncTreeview").getNcTreeview();
-				if(!tv.getCurrentNode()){
-				    alert("请选择一个节点");
-					return;
+				var id = null;
+				var $node = null;
+				var count = 0;
+				if(tv.getCurrentNode()){
+					id = tv.getCurrentNode().id;
+					$node = tv.getDomNode(id);
+                    count = $node.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length;
+				}else{
+				    $node = tv.$view.children(".ncTreeviewBody");
+					count = $node.children(".ncTreeviewNode").length;
 				}
-				var id = tv.getCurrentNode().id;
-				var $node = tv.getDomNode(id);
-                var count = $node.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length;
-			    tv.insertNode(id, id+(count+1), "新建节点"+(count+1));
+				
+			    tv.insertNode(id+(count+1), "新建节点"+(count+1), id);
 			});
 
 			$("#btnRemove").click(function(){

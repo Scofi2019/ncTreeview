@@ -248,10 +248,6 @@ function __ncTreeview(option){
 
 			myself.$lastNode = $this;
 
-			myself._currentNode = {id:$node.attr("node-id"), 
-				                 name:$node.attr("node-name"), 
-				                  pid:$node.attr("node-pid")};
-
             if(doubleTrigger){
 			    if(myself.option.nodeDoubleClick){
 			        myself.option.nodeDoubleClick.call(myself);
@@ -276,21 +272,33 @@ function __ncTreeview(option){
 
 
     //插入节点
-	this.insertNode = function(pid, id, name){
-	    var $pNode = this.$view.find(".ncTreeviewNode[node-id='"+pid+"']");
+	this.insertNode = function(id, name, pid){
+		var $pNode = null;
 
-		if($pNode.children(".ncTreeviewNodeChild").length == 0){
+		if(pid){
+			$pNode = this.$view.find(".ncTreeviewNode[node-id='"+pid+"']");
+		}else{
+		    $pNode = this.$view.find(".ncTreeviewBody");
+		}
+
+		if(pid && $pNode.children(".ncTreeviewNodeChild").length == 0){
 		    $pNode.append('<div class="ncTreeviewNodeChild"></div>');
 		}
 
-		if($pNode.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length == 1){
+		if(pid && $pNode.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length == 1){
 			this._setArrow($pNode);
 			$pNode.children(".ncTreeviewNodeArrow").children("a").click(function(){
 				myself._bindArrowClick($(this).parent().parent());
 			});
 		}
 
-        var $node = this._insertNode({id:id, name:name}, $pNode.children(".ncTreeviewNodeChild"), pid);
+        var $node = null;
+
+        if(pid){
+            $node = this._insertNode({id:id, name:name}, $pNode.children(".ncTreeviewNodeChild"), pid);
+		}else{
+            $node = this._insertNode({id:id, name:name}, $pNode, pid);
+		}
 
         this._setArrow($node);
 		this._setIcon($node);
@@ -341,7 +349,15 @@ function __ncTreeview(option){
 
     //获取当前节点
 	this.getCurrentNode = function(){
-	    return myself._currentNode;
+		var $nodeContent = this.$view.find(".ncTreeviewNodeContent.focus");
+		if($nodeContent.length > 0){
+		    var $node = $nodeContent.parent();
+			myself._currentNode = {id:$node.attr("node-id"), 
+				                 name:$node.attr("node-name"), 
+				                  pid:$node.attr("node-pid")};
+			return myself._currentNode;
+		}
+		return null;
 	}
 
     //获取Dom节点
