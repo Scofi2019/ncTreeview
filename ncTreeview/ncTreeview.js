@@ -57,6 +57,8 @@ function __ncTreeview(option){
 		}
 		
 		this.load(nodes);
+		
+		return nodes;
 	}
      
 	/**
@@ -235,7 +237,7 @@ function __ncTreeview(option){
 		this._setIcon = function($node, expand){
 			if(!this.option.showIcon) return;
 			var length = $node.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length;
-			var icon = expand?(length > 0?"folder-open-o":"leaf"):(length > 0?"folder-o":"leaf");
+			var icon = expand?(length > 0?"folder-open-o":"file-text-o"):(length > 0?"folder-o":"file-text-o");
 			if($node.children(".ncTreeviewNodeIcon").length == 0){
 			     $node.find(".ncTreeviewNodeArrow").after("<div class='ncTreeviewNodeIcon'><i class='fa fa-"+icon+"'></i></div>");
 			}else{
@@ -363,10 +365,14 @@ function __ncTreeview(option){
 		//设置bodyWrapper宽度
 		this.$view.children(".ncTreeviewBody").children(".ncTreeviewBodyWrapper").width(this._maxWidth);
 	}
-
+	
+	//插入节点
+	this.insertNodeObj = function(node){
+		this.insertNode(node.id, node.name, node.pid, node.attributes);
+	}
 
     //插入节点
-	this.insertNode = function(id, name, pid){
+	this.insertNode = function(id, name, pid, attributes){
 		var $pNode = null;
 
 		if(pid){
@@ -379,25 +385,27 @@ function __ncTreeview(option){
 		    $pNode.append('<div class="ncTreeviewNodeChild"></div>');
 		}
 
-		if(pid && $pNode.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length == 1){
+        var $node = null;
+        var node = {id:id, name:name, attributes:attributes};
+
+        if(pid){
+            $node = this._insertNode(node, $pNode.children(".ncTreeviewNodeChild"), pid);
+		}else{
+            $node = this._insertNode(node, $pNode, pid);
+		}
+        
+        if(pid && $pNode.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length == 1){
 			this._setArrow($pNode);
 			$pNode.children(".ncTreeviewNodeArrow").children("a").click(function(){
 				myself._bindArrowClick($(this).parent().parent());
 			});
 		}
 
-        var $node = null;
-
-        if(pid){
-            $node = this._insertNode({id:id, name:name}, $pNode.children(".ncTreeviewNodeChild"), pid);
-		}else{
-            $node = this._insertNode({id:id, name:name}, $pNode, pid);
-		}
-
         this._setArrow($node);
 		this._setIcon($node);
 		this._setCheck($node);
 		this._setMaxWidth($node);
+		this._setMaxWidth(null, true);
 
         $node.children(".ncTreeviewNodeArrow").children("a").click(function(){
 			myself._bindArrowClick($(this).parent().parent());
@@ -413,11 +421,40 @@ function __ncTreeview(option){
 
 		this.expand(pid);
 	}
+	
+	//更新节点
+	this.updateNode = function(node){
+		if(!node || !node.id) return;
+		var $node = this.getDomNode(node.id);
+		
+		$node.attr("node-name", node.name);
+		$node.children(".ncTreeviewNodeContent").text(node.name);
+			
+		if(node.attributes){
+			this.setNodeAttribute(node.id, node.attributes);
+		}
+		
+		this._setMaxWidth($node);
+		this._setMaxWidth(null, true);
+	}
 
     //删除节点
 	this.deleteNode = function(id){
 	    var $node = this.$view.find(".ncTreeviewNode[node-id='"+id+"']");
+		var $pNode = $node.parent().parent(".ncTreeviewNode");
+		var $pNodeChilds = $pNode.children(".ncTreeviewNodeChild");
+		
 		$node.remove();
+		
+		if($pNode.length > 0 && $pNodeChilds.children(".ncTreeviewNode").length == 0){
+			$pNode.children(".ncTreeviewNodeChild").remove();
+		    $pNode.removeAttr("expand");
+		    this._setArrow($pNode);
+		    this._setIcon($pNode);
+		}
+		
+		this._setMaxWidth($node);
+		this._setMaxWidth(null, true);
 	}
 
     //筛选节点
@@ -441,20 +478,41 @@ function __ncTreeview(option){
 		    this.expand();
 		}
 	}
+	
+	//根据ID获取该节点的父节点
+	this.getParentNode = function(id){
+	    var $node = this.getDomNode(id);
+	    var $pNode = $node.parent().parent(".ncTreeviewNode");
+	    if($pNode.length > 0){
+	    	return this._composeNode($pNode);
+	    }
+	    return null;
+	}
+	
+	//获取子节点数量
+	this.getChildCount = function(id){
+		var $node = this.getDomNode(id);
+		return $node.children(".ncTreeviewNodeChild").children(".ncTreeviewNode").length;
+	}
 
     //获取当前节点
 	this.getCurrentNode = function(){
 		var $nodeContent = this.$view.find(".ncTreeviewNodeContent.focus");
 		if($nodeContent.length > 0){
 		    var $node = $nodeContent.parent();
-			this._currentNode = {id:$node.attr("node-id"), 
-				                 name:$node.attr("node-name"), 
-				                  pid:$node.attr("node-pid")};
-			
-			this._currentNode = $.extend(this._currentNode, this.getNodeAttribute(this._currentNode.id));
+			this._currentNode = this._composeNode($node);
 			return this._currentNode;
 		}
 		return null;
+	}
+	
+	this._composeNode = function($node){
+		var node = {id:$node.attr("node-id"), 
+                  name:$node.attr("node-name"), 
+                   pid:$node.attr("node-pid")};
+
+		node = $.extend(node, this.getNodeAttribute(node.id));
+		return node;
 	}
 
     //获取Dom节点
@@ -500,6 +558,14 @@ function __ncTreeview(option){
 		}else{
 		    this.$view.find(".ncTreeviewBody").height(height);
 		}
+	}
+	
+	this.getWidth = function(){
+		return this.$view.outerWidth();
+	}
+	
+	this.getHeight = function(){
+		return this.$view.outerHeight();
 	}
     
 	//设置节点属性

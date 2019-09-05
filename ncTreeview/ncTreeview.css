@@ -66,6 +66,7 @@
 
 .ncTreeviewNodeArrow>a{
     padding:2px 4px;
+    cursor:default;
 }
 
 .ncTreeviewNodeCheck{
@@ -132,6 +133,7 @@
 	vertical-align: middle;
 	overflow:hidden;
 	box-sizing:border-box;
+	cursor:default;
 }
 
 .ncTreeviewNodeContent.found{
